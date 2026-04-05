@@ -1,11 +1,14 @@
 WITH data_table AS (
-SELECT data_year, data_category_inner, data_value, 
-	(data_value - LAG(data_value) OVER (PARTITION BY data_category_inner ORDER BY data_year)) AS difference,
-	(LAG(data_value) OVER (PARTITION BY data_category_inner ORDER BY data_year)) AS prev
-	FROM t_matej_novotny_project_sql_primary_final WHERE data_category_outer = '1' AND (
-	data_year = (SELECT MIN(data_year) FROM t_matej_novotny_project_sql_primary_final) OR
-	data_year = (SELECT MAX(data_year) FROM t_matej_novotny_project_sql_primary_final)
-	) ORDER BY data_category_inner, data_year
+	SELECT "year" AS "year", category_inner AS "product", value AS "product_quantity",
+	(value - LAG(value) OVER (PARTITION BY category_inner ORDER BY "year")) AS difference,
+	(LAG(value) OVER (PARTITION BY category_inner ORDER BY "year")) AS prev
+	FROM t_matej_novotny_project_sql_primary_final WHERE category_outer = 'cena'
+	AND
+	(
+		"year" = (SELECT MIN("year") FROM t_matej_novotny_project_sql_primary_final) OR
+		"year" = (SELECT MAX("year") FROM t_matej_novotny_project_sql_primary_final)
+	)
+	ORDER BY category_inner, "year"
 )
-SELECT data_year, data_category_inner, data_value, prev, ((100* difference/prev)) AS percentage 
+SELECT "year", product, ROUND(product_quantity::NUMERIC,2) AS quantity, ROUND((100 * difference/prev)::NUMERIC,2) AS percentage 
 FROM data_table WHERE difference IS NOT NULL;

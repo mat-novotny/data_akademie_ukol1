@@ -1,14 +1,26 @@
 WITH data_table AS(
-	SELECT food.data_year, food.data_category_inner, food.data_value, wages.data_value AS data_wages
-	FROM t_matej_novotny_project_sql_primary_final AS food 
+	SELECT product."year", product.category_inner, product.value AS product_price, wages.value AS average_wage
+	FROM t_matej_novotny_project_sql_primary_final AS product 
 	JOIN
 	(
-		SELECT data_year, AVG(data_value) AS data_value FROM t_matej_novotny_project_sql_primary_final WHERE data_category_outer = '0' GROUP BY data_year
+		SELECT "year", AVG(value) AS value
+		FROM t_matej_novotny_project_sql_primary_final
+		WHERE category_outer = 'plat'
+		GROUP BY "year"
 	) AS wages
-	ON (food.data_year = wages.data_year)
-	WHERE (food.data_category_inner = '114201' OR food.data_category_inner = '111301') AND (
-	food.data_year = (SELECT MIN(data_year) FROM t_matej_novotny_project_sql_primary_final) OR
-	food.data_year = (SELECT MAX(data_year) FROM t_matej_novotny_project_sql_primary_final))
+	ON (product."year" = wages."year")
+	WHERE
+	(
+		product.category_inner = 'Mléko polotučné pasterované'
+		OR
+		product.category_inner = 'Chléb konzumní kmínový'
+	)
+	AND
+	(
+		product."year" = (SELECT MIN("year")	FROM t_matej_novotny_project_sql_primary_final)
+		OR
+		product."year" = (SELECT MAX("year") FROM t_matej_novotny_project_sql_primary_final)
+	)
 )
-SELECT data_year, CASE WHEN data_category_inner = '114201' THEN 'mleko' ELSE 'chleba' END AS product, data_value, data_wages, (data_wages/data_value) AS quantity
+SELECT "year", category_inner as product, ROUND(product_price::numeric,2) AS product_price, ROUND(average_wage::numeric,2) AS average_wage, ROUND((average_wage / product_price)::numeric,2) AS product_quantity
 FROM data_table
